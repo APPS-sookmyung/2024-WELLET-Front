@@ -51,6 +51,8 @@ export default function AddGroupModal({ isModalOpen, setIsModalOpen }) {
     setIsModalOpen(false);
   };
 
+  console.log('test');
+
   return (
     <>
       {showModal && <S.BackgroundBlur isModalOpen={isModalOpen} />}

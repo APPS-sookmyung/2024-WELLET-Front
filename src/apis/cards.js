@@ -15,10 +15,10 @@ export const getCardDetail = async ({ card_id }) => {
 };
 
 // 명함 생성
-export const postCards = async ({ data }) => {
-  const response = await authAxios.post(`/cards`, data);
-  // console.log(response);
-  return response;
+export const postCards = async (formData) => {
+  return await authAxios.post('/cards', formData, {
+    headers: {},
+  });
 };
 
 // 명함 삭제

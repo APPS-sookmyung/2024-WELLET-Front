@@ -7,6 +7,7 @@ const InputWrapper = ({
   type,
   placeholder,
   children,
+  name,
   value,
   textColor = '#949494',
   iconId = 'pencil',
@@ -21,6 +22,7 @@ const InputWrapper = ({
       <S.InputBox>
         <S.Input
           type={type}
+          name={name}
           placeholder={placeholder}
           color={textColor}
           value={value}

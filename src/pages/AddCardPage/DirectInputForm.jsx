@@ -1,10 +1,9 @@
-import React from 'react';
 import * as S from './AddCardPage.style';
 import Icon from '../../components/Icon/Icon';
 import { InputWrapper, BlueBadge } from '../../components';
 
 export default function DirectInputForm({
-  profileImage,
+  profileImagePreview,
   onUploadProfileImage,
   handleProfileImageClick,
   profileImageInputRef,
@@ -12,6 +11,8 @@ export default function DirectInputForm({
   activeGroupBadge,
   groupBadges,
   setActiveGroupBadge,
+  handleInputChange,
+  formDataState,
 }) {
   return (
     <S.DashedBorder>
@@ -21,12 +22,12 @@ export default function DirectInputForm({
         <S.SelectImg
           onClick={handleProfileImageClick}
           style={{
-            backgroundImage: `url(${profileImage})`,
+            backgroundImage: `url(${profileImagePreview || ''})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         >
-          {!profileImage && <Icon id='image' fill='none' />}
+          {!profileImagePreview && <Icon id='image' fill='none' />}
         </S.SelectImg>
         <S.RegisterText>
           <S.RegisterTitle>프로필 사진 등록</S.RegisterTitle>
@@ -52,6 +53,9 @@ export default function DirectInputForm({
             label={field.label}
             type={field.type}
             placeholder={field.placeholder}
+            name={field.name}
+            value={formDataState[field.name] || ''}
+            onChange={handleInputChange}
           />
         ))}
       </S.InputContainer>

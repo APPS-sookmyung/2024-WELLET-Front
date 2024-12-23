@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import * as S from './AddCardPage.style';
 import {
   Header,
@@ -9,11 +9,12 @@ import {
 } from '../../components';
 import ImageInputForm from './ImageInputForm';
 import DirectInputForm from './DirectInputForm';
-import { postCards } from '../../apis/cards';
+import { postCards, getGroupList } from '../../apis';
 
 export default function AddCardPage() {
   const [activeBadge, setActiveBadge] = useState('이미지로 입력');
-  const [activeGroupBadge, setActiveGroupBadge] = useState('비즈니스');
+  const [activeGroupBadge, setActiveGroupBadge] = useState('');
+  const [groupBadges, setGroupBadges] = useState([]);
   const [selectedImage, setSelectedImage] = useState([]);
   const [profileImage, setProfileImage] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState(null);
@@ -38,11 +39,30 @@ export default function AddCardPage() {
     { label: '직접 입력', value: '직접 입력' },
   ];
 
-  const groupBadges = [
-    { label: '비즈니스', value: '비즈니스' },
-    { label: '음식점', value: '음식점' },
-    { label: '학교', value: '학교' },
-  ];
+  useEffect(() => {
+    const fetchGroupData = async () => {
+      try {
+        const response = await getGroupList();
+        const data = response.data;
+
+        if (Array.isArray(data) && data.length > 0) {
+          const formattedGroupBadges = data.map((group) => ({
+            label: group.name,
+            value: group.name,
+          }));
+          setGroupBadges(formattedGroupBadges);
+          setActiveGroupBadge(formattedGroupBadges[0]?.value || '');
+        } else {
+          setGroupBadges([]);
+        }
+      } catch (error) {
+        console.error('그룹 데이터를 가져오는 데 실패했습니다:', error);
+        setGroupBadges([]);
+      }
+    };
+
+    fetchGroupData();
+  }, []);
 
   const inputFields = [
     {
@@ -99,33 +119,14 @@ export default function AddCardPage() {
       return;
     }
 
-    setFormDataState((prevState) => {
-      const updatedState = { ...prevState, [name]: value };
-      return updatedState;
-    });
-  };
-
-  const onUploadImage = (event) => {
-    const files = Array.from(event.target.files || event.dataTransfer.files);
-    const newImages = files.slice(0, 2);
-    setSelectedImage((prevImages) =>
-      [...prevImages.slice(0, 2), ...newImages].slice(0, 2)
-    );
-  };
-
-  const onUploadProfileImage = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setProfileImage(file);
-      setProfileImagePreview(URL.createObjectURL(file));
-    }
+    setFormDataState((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
   const handleRegister = async () => {
-    console.log('formDataState (Before Submit):', formDataState);
-
     const formData = new FormData();
-
     Object.entries(formDataState).forEach(([key, value]) => {
       if (value) formData.append(key, value);
     });
@@ -136,53 +137,13 @@ export default function AddCardPage() {
     if (selectedImage[0]) formData.append('frontImg', selectedImage[0]);
     if (selectedImage[1]) formData.append('backImg', selectedImage[1]);
 
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-
     try {
       const response = await postCards(formData);
-      console.log('등록 성공:', response.data);
       alert('명함이 성공적으로 등록되었습니다!');
     } catch (error) {
-      if (error.response) {
-        console.error('응답 데이터:', error.response.data);
-        console.error('응답 상태 코드:', error.response.status);
-        console.error('응답 헤더:', error.response.headers);
-      } else if (error.request) {
-        console.error('요청이 전송되었으나 응답 없음:', error.request);
-      } else {
-        console.error('요청 설정 중 문제 발생:', error.message);
-      }
+      console.error('명함 등록 실패:', error);
       alert('명함 등록에 실패했습니다. 다시 시도해주세요.');
     }
-  };
-
-  const handleButtonClick = () => {
-    imageInputRef.current.click();
-  };
-
-  const handleProfileImageClick = () => {
-    profileImageInputRef.current.click();
-  };
-
-  const handleDragOver = (event, isOver) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragOver(isOver);
-  };
-
-  const handleDragLeave = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragOver(false);
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragOver(false);
-    onUploadImage(event);
   };
 
   return (
@@ -206,21 +167,15 @@ export default function AddCardPage() {
       {activeBadge === '이미지로 입력' ? (
         <ImageInputForm
           selectedImage={selectedImage}
-          onUploadImage={onUploadImage}
-          handleButtonClick={handleButtonClick}
+          onUploadImage={(e) =>
+            setSelectedImage([...selectedImage, ...e.target.files])
+          }
           imageInputRef={imageInputRef}
-          isDragOver={isDragOver}
-          handleDragOver={(e) => handleDragOver(e, true)}
-          handleDragLeave={handleDragLeave}
-          handleDrop={handleDrop}
         />
       ) : (
         <DirectInputForm
           profileImage={profileImage}
           profileImagePreview={profileImagePreview}
-          onUploadProfileImage={onUploadProfileImage}
-          handleProfileImageClick={handleProfileImageClick}
-          profileImageInputRef={profileImageInputRef}
           inputFields={inputFields}
           activeGroupBadge={activeGroupBadge}
           groupBadges={groupBadges}
